@@ -3,9 +3,7 @@ import { FormEvent, useCallback, useEffect, useState } from 'react';
 import { api, ApiError, Role, User } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { fmtDate } from '@/lib/format';
-import { Badge, Button, EmptyState, ErrorBanner, Field, Input, Modal, PageHeader, Select, Spinner } from '@/components/ui';
-
-const cap = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
+import { Avatar, Badge, Button, EmptyState, ErrorBanner, Field, Icon, Input, Modal, PageHeader, Select, Spinner, Table, tbodyCls, theadCls, Th, titleCase } from '@/components/ui';
 
 export default function UsersPage() {
   const { user: me } = useAuth();
@@ -27,31 +25,34 @@ export default function UsersPage() {
   return (
     <>
       <PageHeader title="Users" subtitle="Create staff accounts and choose what each person can do. There is no public signup."
-        actions={<Button onClick={() => setDialog({ mode: 'create' })}>Add user</Button>} />
+        actions={<Button onClick={() => setDialog({ mode: 'create' })}><Icon name="plus" />Add user</Button>} />
       <ErrorBanner error={error} onRetry={load} />
-      {!users ? <Spinner label="Loading users…" /> : users.length === 0 && !error ? <EmptyState title="No users" /> : (
-        <div className="mt-3 overflow-x-auto rounded-lg border border-stone-200 bg-white">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="border-b border-stone-200 bg-stone-50 text-xs uppercase tracking-wide text-stone-500">
-              <tr><th className="px-4 py-2.5 font-medium">Name</th><th className="px-4 py-2.5 font-medium">Role</th><th className="px-4 py-2.5 font-medium">Status</th><th className="px-4 py-2.5 font-medium">Created</th><th className="px-4 py-2.5" /></tr>
-            </thead>
-            <tbody className="divide-y divide-stone-100">
+      {!users ? <Spinner label="Loading users…" /> : users.length === 0 && !error ? <EmptyState icon="users" title="No users yet" /> : (
+        <div className="mt-4">
+          <Table caption="Staff accounts" minWidth={680}>
+            <thead className={theadCls}><tr><Th>Name</Th><Th>Role</Th><Th>Status</Th><Th>Created</Th><Th /></tr></thead>
+            <tbody className={tbodyCls}>
               {users.map((u) => (
-                <tr key={u.id}>
-                  <td className="px-4 py-3"><p className="font-medium">{u.name}{u.id === me?.id && <span className="ml-1 text-xs font-normal text-stone-500">(you)</span>}</p><p className="text-xs text-stone-500">{u.email}</p></td>
-                  <td className="px-4 py-3"><Badge tone={u.role}>{cap(u.role)}</Badge></td>
-                  <td className="px-4 py-3"><Badge tone={u.isActive ? 'ACTIVE' : 'INACTIVE'}>{u.isActive ? 'Active' : 'Disabled'}</Badge></td>
-                  <td className="px-4 py-3 text-stone-600">{u.createdAt && fmtDate(u.createdAt)}</td>
-                  <td className="px-4 py-3 text-right">
+                <tr key={u.id} className={u.isActive ? '' : 'bg-ink-50/70'}>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-3">
+                      <Avatar name={u.name} className={u.isActive ? '' : '!bg-ink-100 !text-ink-500'} />
+                      <div className="min-w-0"><p className="font-medium text-ink-900">{u.name}{u.id === me?.id && <span className="ml-1.5 text-xs font-normal text-ink-500">(you)</span>}</p><p className="text-[0.8125rem] text-ink-600">{u.email}</p></div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5"><Badge tone={u.role}>{titleCase(u.role)}</Badge></td>
+                  <td className="px-4 py-3.5"><Badge tone={u.isActive ? 'ACTIVE' : 'INACTIVE'}>{u.isActive ? 'Active' : 'Disabled'}</Badge></td>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-ink-700">{u.createdAt && fmtDate(u.createdAt)}</td>
+                  <td className="px-4 py-3.5 text-right">
                     <div className="flex justify-end gap-2">
-                      <Button variant="secondary" onClick={() => setDialog({ mode: 'edit', user: u })}>Edit</Button>
-                      {u.id !== me?.id && <Button variant="ghost" onClick={() => toggleActive(u)}>{u.isActive ? 'Disable' : 'Enable'}</Button>}
+                      <Button variant="secondary" size="sm" onClick={() => setDialog({ mode: 'edit', user: u })}>Edit</Button>
+                      {u.id !== me?.id && <Button variant="ghost" size="sm" onClick={() => toggleActive(u)}>{u.isActive ? 'Disable' : 'Enable'}</Button>}
                     </div>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
+          </Table>
         </div>
       )}
       {dialog && <UserDialog dialog={dialog} isSelf={dialog.mode === 'edit' && dialog.user.id === me?.id} onClose={() => setDialog(null)} onDone={async () => { setDialog(null); await load(); }} />}
@@ -91,16 +92,16 @@ function UserDialog({ dialog, isSelf, onClose, onDone }: { dialog: { mode: 'crea
 
   return (
     <Modal title={editing ? 'Edit user' : 'Add user'} onClose={onClose}>
-      <form onSubmit={submit} noValidate className="space-y-3">
+      <form onSubmit={submit} noValidate className="space-y-4">
         <ErrorBanner error={error} />
-        <Field label="Full name" error={errors.name}>{(id) => <Input id={id} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
-        <Field label="Email" error={errors.email}>{(id) => <Input id={id} type="email" value={email} disabled={!!editing} onChange={(e) => setEmail(e.target.value)} />}</Field>
-        <Field label="Role" hint={isSelf ? 'You cannot change your own role.' : 'Admin: accounts · Manager: workshops and registrations · Staff: registrations'}>
-          {(id) => <Select id={id} value={role} disabled={isSelf} onChange={(e) => setRole(e.target.value as Role)}><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="ADMIN">Admin</option></Select>}
+        <Field label="Full name" error={errors.name}>{(id, a) => <Input id={id} {...a} value={name} onChange={(e) => setName(e.target.value)} />}</Field>
+        <Field label="Email" error={errors.email}>{(id, a) => <Input id={id} {...a} type="email" value={email} disabled={!!editing} onChange={(e) => setEmail(e.target.value)} />}</Field>
+        <Field label="Role" hint={isSelf ? 'You cannot change your own role.' : 'Admin manages accounts. Manager manages workshops and registrations. Staff manages registrations.'}>
+          {(id, a) => <Select id={id} {...a} value={role} disabled={isSelf} onChange={(e) => setRole(e.target.value as Role)}><option value="STAFF">Staff</option><option value="MANAGER">Manager</option><option value="ADMIN">Admin</option></Select>}
         </Field>
-        <Field label={editing ? 'New password (leave blank to keep)' : 'Temporary password'} error={errors.password}>{(id) => <Input id={id} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}</Field>
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose} disabled={busy}>Cancel</Button>
+        <Field label={editing ? 'New password' : 'Temporary password'} optional={!!editing} error={errors.password} hint={editing ? 'Leave blank to keep the current password.' : undefined}>{(id, a) => <Input id={id} {...a} type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />}</Field>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="secondary" onClick={onClose} disabled={busy}>Cancel</Button>
           <Button type="submit" disabled={busy}>{busy ? 'Saving…' : editing ? 'Save changes' : 'Create user'}</Button>
         </div>
       </form>
