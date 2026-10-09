@@ -4,7 +4,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { homeFor, useAuth } from '@/lib/auth';
 import { Role } from '@/lib/api';
-import { Badge, Spinner } from './ui';
+import { Avatar, Badge, Button, cx, Spinner, titleCase } from './ui';
+import { BrandMark } from './Brand';
 
 const NAV: { href: string; label: string; roles: Role[] }[] = [
   { href: '/workshops', label: 'Workshops', roles: ['MANAGER', 'STAFF'] },
@@ -25,39 +26,54 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (!allowed) router.replace(homeFor(user));
   }, [user, path, router]);
 
-  if (loading || !user) return <div className="px-6"><Spinner /></div>;
+  if (loading || !user) return <Spinner fill label="Loading your workspace…" />;
   const links = NAV.filter((n) => n.roles.includes(user.role));
 
   return (
-    <div className="min-h-screen md:flex">
-      <aside className="border-b border-stone-200 bg-white md:fixed md:inset-y-0 md:w-60 md:border-b-0 md:border-r">
-        <div className="flex items-center justify-between px-4 py-3 md:block md:py-5">
-          <p className="text-base font-semibold tracking-tight">Workshop Desk</p>
-          <div className="md:mt-1 md:text-xs md:text-stone-500"><span className="hidden md:inline">Registration &amp; scheduling</span></div>
+    <div className="min-h-screen">
+      <header className="sticky top-0 z-30 border-b border-ink-200 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4 md:gap-8 md:px-8">
+          <Link href={homeFor(user)} className="flex shrink-0 items-center gap-2.5 rounded-lg" aria-label="Workshop Desk home">
+            <BrandMark />
+            <span className="text-[0.9375rem] font-semibold tracking-tight text-ink-900">Workshop Desk</span>
+          </Link>
+
+          <nav className="hidden h-full items-stretch gap-1 md:flex" aria-label="Main">
+            {links.map((l) => <NavLink key={l.href} href={l.href} active={path.startsWith(l.href)}>{l.label}</NavLink>)}
+          </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <div className="hidden items-center gap-2.5 sm:flex">
+              <Avatar name={user.name} />
+              <div className="min-w-0 leading-tight">
+                <p className="max-w-40 truncate text-sm font-medium text-ink-900">{user.name}</p>
+                <p className="max-w-40 truncate text-xs text-ink-500">{user.email}</p>
+              </div>
+              <Badge tone={user.role}>{titleCase(user.role)}</Badge>
+            </div>
+            <span className="text-xs font-medium text-ink-600 sm:hidden">{titleCase(user.role)}</span>
+            <Button variant="secondary" size="sm" onClick={logout}><span>Sign out</span></Button>
+          </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto px-3 pb-2 md:block md:space-y-1 md:pb-0" aria-label="Main">
-          {links.map((l) => {
-            const active = path.startsWith(l.href);
-            return (
-              <Link key={l.href} href={l.href} aria-current={active ? 'page' : undefined}
-                className={`block whitespace-nowrap rounded-md px-3 py-2 text-sm font-medium ${active ? 'bg-teal-50 text-teal-900' : 'text-stone-700 hover:bg-stone-100'}`}>
-                {l.label}
-              </Link>
-            );
-          })}
-        </nav>
-        <div className="hidden border-t border-stone-200 p-4 md:absolute md:bottom-0 md:block md:w-full">
-          <p className="truncate text-sm font-medium">{user.name}</p>
-          <p className="mb-2 truncate text-xs text-stone-500">{user.email}</p>
-          <div className="flex items-center justify-between"><Badge tone={user.role}>{user.role.charAt(0) + user.role.slice(1).toLowerCase()}</Badge>
-            <button onClick={logout} className="text-sm font-medium text-stone-700 underline-offset-2 hover:underline">Sign out</button></div>
-        </div>
-        <div className="flex items-center justify-between border-t border-stone-100 px-4 py-2 text-xs md:hidden">
-          <span className="truncate text-stone-600">{user.name} · {user.role.toLowerCase()}</span>
-          <button onClick={logout} className="font-medium underline">Sign out</button>
-        </div>
-      </aside>
-      <main className="mx-auto w-full max-w-6xl px-4 py-6 md:ml-60 md:px-8 md:py-8">{children}</main>
+        {links.length > 1 && (
+          <nav className="flex gap-1 overflow-x-auto border-t border-ink-100 px-3 md:hidden" aria-label="Main">
+            {links.map((l) => <NavLink key={l.href} href={l.href} active={path.startsWith(l.href)} compact>{l.label}</NavLink>)}
+          </nav>
+        )}
+      </header>
+      <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl px-4 py-6 outline-none md:px-8 md:py-10">{children}</main>
     </div>
+  );
+}
+
+function NavLink({ href, active, compact, children }: { href: string; active: boolean; compact?: boolean; children: React.ReactNode }) {
+  return (
+    <Link href={href} aria-current={active ? 'page' : undefined}
+      className={cx('relative flex items-center whitespace-nowrap px-3 text-sm font-medium transition-colors', compact ? 'h-11' : 'rounded-md',
+        active ? 'text-ink-900' : 'text-ink-600 hover:text-ink-900',
+        'after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:rounded-full after:transition-colors',
+        active ? 'after:bg-marigold-400' : 'after:bg-transparent hover:after:bg-ink-200')}>
+      {children}
+    </Link>
   );
 }

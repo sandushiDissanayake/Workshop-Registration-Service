@@ -1,9 +1,63 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+  /* Neutrals (cool ink) */
+  --color-canvas: #f5f6f8;
+  --color-ink-900: #131a26;
+  --color-ink-700: #3a4457;
+  --color-ink-600: #4b5568;
+  --color-ink-500: #5f6b7e;
+  --color-ink-400: #98a2b3;
+  --color-ink-300: #c4cad4;
+  --color-ink-200: #e1e5eb;
+  --color-ink-100: #edf0f4;
+  --color-ink-50: #f7f8fa;
+
+  /* Brand: deep navy, with marigold reserved for "needs attention" */
+  --color-navy-900: #141f42;
+  --color-navy-800: #1a2850;
+  --color-navy-700: #1f2e5a;
+  --color-navy-600: #2b3f78;
+  --color-navy-200: #c9d3ee;
+  --color-navy-100: #e3e8f5;
+  --color-navy-50: #f0f3fa;
+  --color-marigold-600: #c77700;
+  --color-marigold-400: #f0b429;
+  --color-marigold-100: #fff2cf;
+  --color-marigold-800: #6f4300;
+
+  /* Status */
+  --color-ok-700: #0f7b55;
+  --color-ok-100: #dcf3e8;
+  --color-ok-50: #eef9f3;
+  --color-danger-700: #b42318;
+  --color-danger-600: #d92d20;
+  --color-danger-100: #fde4e1;
+  --color-danger-50: #fef3f1;
+
+  --shadow-card: 0 1px 2px rgb(19 26 38 / 0.04), 0 1px 1px rgb(19 26 38 / 0.03);
+  --shadow-pop: 0 20px 50px -12px rgb(19 26 38 / 0.35);
 }
 
-html { color-scheme: light; }
-body { @apply bg-stone-50 text-stone-900 antialiased; }
-:focus-visible { outline: 2px solid #0f766e; outline-offset: 2px; }
+html { color-scheme: light; -webkit-text-size-adjust: 100%; }
+body {
+  @apply bg-canvas text-ink-900 antialiased;
+  font-feature-settings: "ss01", "cv11";
+  text-rendering: optimizeLegibility;
+}
+h1, h2, h3 { letter-spacing: -0.015em; text-wrap: balance; }
+
+:focus-visible { outline: 2px solid #2f5bea; outline-offset: 2px; border-radius: 4px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline-offset: 0; border-radius: 8px; }
+::selection { background: var(--color-navy-100); }
+
+@keyframes modal-in { from { opacity: 0; transform: translateY(8px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+.animate-modal { animation: modal-in 160ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.animate-fade { animation: fade-in 140ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
+}

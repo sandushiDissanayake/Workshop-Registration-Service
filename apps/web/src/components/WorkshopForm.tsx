@@ -2,7 +2,7 @@
 import { FormEvent, useState } from 'react';
 import { ApiError, Workshop, WorkshopStatus } from '@/lib/api';
 import { toLocalInput } from '@/lib/format';
-import { Button, ErrorBanner, Field, Input, Select } from './ui';
+import { Button, ErrorBanner, Field, Input, Select, Textarea } from './ui';
 
 export interface WorkshopPayload {
   code: string; title: string; instructor: string; description: string; location: string;
@@ -56,28 +56,41 @@ export function WorkshopForm({ initial, activeCount = 0, submitLabel, onSubmit, 
   }
 
   return (
-    <form onSubmit={submit} noValidate className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-6">
       <ErrorBanner error={serverError} />
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Workshop code" error={errors.code} hint="Unique, e.g. POT-101">{(id) => <Input id={id} value={v.code} onChange={set('code')} className="uppercase" />}</Field>
-        <div className="sm:col-span-2"><Field label="Title" error={errors.title}>{(id) => <Input id={id} value={v.title} onChange={set('title')} />}</Field></div>
-        <Field label="Instructor" error={errors.instructor}>{(id) => <Input id={id} value={v.instructor} onChange={set('instructor')} />}</Field>
-        <Field label="Location" error={errors.location}>{(id) => <Input id={id} value={v.location} onChange={set('location')} placeholder="e.g. Kandy Studio" />}</Field>
-        <Field label="Capacity (seats)" error={errors.capacity}>{(id) => <Input id={id} type="number" min={1} max={1000} value={v.capacity} onChange={set('capacity')} />}</Field>
-        <Field label="Starts" error={errors.startsAt}>{(id) => <Input id={id} type="datetime-local" value={v.startsAt} onChange={set('startsAt')} />}</Field>
-        <Field label="Ends" error={errors.endsAt}>{(id) => <Input id={id} type="datetime-local" value={v.endsAt} onChange={set('endsAt')} />}</Field>
-        <Field label="Status" hint={v.status !== 'SCHEDULED' ? 'Only scheduled workshops accept registrations.' : undefined}>
-          {(id) => (
-            <Select id={id} value={v.status} onChange={set('status')}>
-              <option value="SCHEDULED">Scheduled</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option>
-            </Select>
-          )}
+      <fieldset className="min-w-0 space-y-4">
+        <legend className="mb-3 text-sm font-semibold text-ink-900">Details</legend>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Field label="Workshop code" error={errors.code} hint="Unique, e.g. POT-101">{(id, a) => <Input id={id} {...a} value={v.code} onChange={set('code')} className="uppercase" autoComplete="off" />}</Field>
+          <div className="sm:col-span-2"><Field label="Title" error={errors.title}>{(id, a) => <Input id={id} {...a} value={v.title} onChange={set('title')} />}</Field></div>
+          <div className="sm:col-span-3 grid gap-4 sm:grid-cols-2">
+            <Field label="Instructor" error={errors.instructor}>{(id, a) => <Input id={id} {...a} value={v.instructor} onChange={set('instructor')} />}</Field>
+            <Field label="Location" error={errors.location}>{(id, a) => <Input id={id} {...a} value={v.location} onChange={set('location')} placeholder="e.g. Kandy Studio" />}</Field>
+          </div>
+        </div>
+        <Field label="Description" optional>
+          {(id, a) => <Textarea id={id} {...a} rows={3} value={v.description} onChange={set('description')} />}
         </Field>
-      </div>
-      <Field label="Description (optional)">
-        {(id) => <textarea id={id} rows={3} value={v.description} onChange={set('description')} className="w-full rounded-md border border-stone-300 bg-white px-3 py-2 text-sm focus:border-teal-700" />}
-      </Field>
-      <div className="flex gap-2">
+      </fieldset>
+
+      <hr className="border-ink-100" />
+      <fieldset className="min-w-0 space-y-4">
+        <legend className="mb-3 text-sm font-semibold text-ink-900">Schedule and seats</legend>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Field label="Starts" error={errors.startsAt}>{(id, a) => <Input id={id} {...a} type="datetime-local" value={v.startsAt} onChange={set('startsAt')} />}</Field>
+          <Field label="Ends" error={errors.endsAt}>{(id, a) => <Input id={id} {...a} type="datetime-local" value={v.endsAt} onChange={set('endsAt')} />}</Field>
+          <Field label="Capacity (seats)" error={errors.capacity} hint={activeCount > 0 ? `${activeCount} already taken.` : undefined}>{(id, a) => <Input id={id} {...a} type="number" inputMode="numeric" min={1} max={1000} value={v.capacity} onChange={set('capacity')} />}</Field>
+          <Field label="Status" hint={v.status !== 'SCHEDULED' ? 'Only scheduled workshops accept registrations.' : undefined}>
+            {(id, a) => (
+              <Select id={id} {...a} value={v.status} onChange={set('status')}>
+                <option value="SCHEDULED">Scheduled</option><option value="COMPLETED">Completed</option><option value="CANCELLED">Cancelled</option>
+              </Select>
+            )}
+          </Field>
+        </div>
+      </fieldset>
+
+      <div className="flex flex-wrap gap-2 pt-1">
         <Button type="submit" disabled={busy}>{busy ? 'Saving…' : submitLabel}</Button>
         <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>Cancel</Button>
       </div>

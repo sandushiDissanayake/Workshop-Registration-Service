@@ -10,5 +10,5 @@ export default function Index() {
   useEffect(() => {
     if (!loading) router.replace(user ? homeFor(user) : '/login');
   }, [loading, user, router]);
-  return <div className="px-6"><Spinner /></div>;
+  return <Spinner fill label="Loading…" />;
 }
